@@ -1,0 +1,8 @@
+<svg width="600" height="600" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="600" rx="84" fill="#170F0E"/>
+  <rect x="90" y="90" width="420" height="420" rx="40" fill="#211615" stroke="#F29C6B" stroke-width="10"/>
+  <path d="M180 260H270L286 220H170L120 390H210L226 350H318L338 390H480L430 220H350L334 260H246L232 300H360L330 410H220L180 260Z" fill="#F7AC7C"/>
+  <path d="M328 200H470L438 330H340L328 200Z" fill="#FFBE8B" opacity="0.8"/>
+  <text x="300" y="455" text-anchor="middle" fill="#FCE9DE" font-family="Arial, sans-serif" font-size="44" font-weight="700">HTML</text>
+  <text x="300" y="500" text-anchor="middle" fill="#F5B185" font-family="Arial, sans-serif" font-size="22" letter-spacing="4">ESSENTIALS</text>
+</svg>

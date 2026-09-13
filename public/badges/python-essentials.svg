@@ -1,0 +1,18 @@
+<svg width="600" height="600" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="120" y1="80" x2="500" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#81E6FF"/>
+      <stop offset="1" stop-color="#2ABAE5"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" rx="84" fill="#0E1A1A"/>
+  <circle cx="300" cy="220" r="170" fill="url(#g1)" opacity="0.18"/>
+  <rect x="90" y="90" width="420" height="420" rx="40" fill="#121820" stroke="#7BE0FF" stroke-width="10"/>
+  <path d="M160 230L240 150L300 220L380 160L430 230" stroke="#7BE0FF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M200 280H400" stroke="#E6F9FF" stroke-width="18" stroke-linecap="round"/>
+  <path d="M200 330H360" stroke="#E6F9FF" stroke-width="18" stroke-linecap="round"/>
+  <path d="M200 380H340" stroke="#E6F9FF" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="300" cy="220" r="24" fill="#B8F3FF"/>
+  <text x="300" y="462" text-anchor="middle" fill="#EAFBFF" font-family="Arial, sans-serif" font-size="52" font-weight="700">PYTHON</text>
+  <text x="300" y="510" text-anchor="middle" fill="#8FE0F8" font-family="Arial, sans-serif" font-size="28" letter-spacing="4">ESSENTIALS 1</text>
+</svg>

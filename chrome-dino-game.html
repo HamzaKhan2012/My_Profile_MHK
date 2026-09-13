@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chrome Dino Game</title>
+    <style>
+      :root {
+        --bg: #f1f1f1;
+        --panel: #ffffff;
+        --ink: #1f1f1f;
+        --muted: #666;
+        --line: rgba(31, 31, 31, 0.18);
+        --dino: #3d3d3d;
+        --dino-light: #f7f7f7;
+        --ground: #535353;
+        --grass: #6d6d6d;
+        --accent: #4d8dff;
+        --shadow: rgba(0, 0, 0, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+        background: linear-gradient(180deg, #f7f7f7 0%, #e8e8e8 100%);
+        color: var(--ink);
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+      }
+
+      .game-wrap {
+        width: min(94vw, 980px);
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .hud {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .score {
+        display: flex;
+        gap: 18px;
+      }
+
+      .game-shell {
+        position: relative;
+        width: 100%;
+        height: 320px;
+        overflow: hidden;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #f5f5f5 0%, #eeeeee 62%, #e7e7e7 100%);
+        border: 2px solid rgba(31,31,31,0.12);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+      }
+
+      .start-overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.04) 100%);
+        transition: opacity 0.2s ease;
+      }
+
+      .start-overlay.hidden {
+        opacity: 0;
+      }
+
+      .start-message {
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.72);
+        border: 1px solid rgba(31,31,31,0.14);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.05);
+      }
+
+      .button-row {
+        margin-top: 14px;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid rgba(31,31,31,0.1);
+        background: white;
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+      }
+
+      @media (max-width: 640px) {
+        .hud {
+          font-size: 10px;
+          letter-spacing: 0.06em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-wrap">
+      <div class="hud">
+        <div>Chrome Dino</div>
+        <div class="score">
+          <span id="score">Score: 0</span>
+          <span id="highScore">Best: 0</span>
+        </div>
+      </div>
+
+      <div class="game-shell" id="gameShell">
+        <canvas id="gameCanvas" width="960" height="320" aria-label="Chrome dino runner"></canvas>
+        <div class="start-overlay" id="startOverlay">
+          <div class="start-message">Press space to start</div>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button id="restartBtn" type="button">Restart</button>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('gameCanvas')
+      const ctx = canvas.getContext('2d')
+      const scoreEl = document.getElementById('score')
+      const highScoreEl = document.getElementById('highScore')
+      const startOverlay = document.getElementById('startOverlay')
+      const restartBtn = document.getElementById('restartBtn')
+
+      const state = {
+        started: false,
+        running: false,
+        gameOver: false,
+        score: 0,
+        highScore: Number(localStorage.getItem('chromeDinoHighScore') || 0),
+        speed: 6,
+        obstacleTimer: 0,
+        clouds: [],
+        obstacles: [],
+        lastTime: 0,
+      }
+
+      function createObstacle() {
+        const birdChance = state.score > 120 && Math.random() < 0.32
+
+        if (birdChance) {
+          const birdWidth = 28
+          const birdHeight = 20
+          const tiers = [110, 140, 175]
+
+          return {
+            type: 'bird',
+            x: canvas.width + 20,
+            y: ground.y - tiers[Math.floor(Math.random() * tiers.length)] - birdHeight,
+            width: birdWidth,
+            height: birdHeight,
+            passed: false,
+            phase: Math.random() * Math.PI * 2,
+          }
+        }
+
+        const height = 20 + Math.random() * 42
+        const width = 16 + Math.random() * 18
+
+        return {
+          type: 'cactus',
+          x: canvas.width + 20,
+          y: ground.y - height,
+          width,
+          height,
+          passed: false,
+          phase: Math.random() * Math.PI * 2,
+        }
+      }
+
+      const dino = {
+        x: 70,
+        y: 220,
+        width: 32,
+        height: 40,
+        velocityY: 0,
+        gravity: 2000,
+        jumpForce: 720,
+        isJumping: false,
+        frame: 0,
+      }
+
+      const ground = {
+        y: 250,
+        height: 70,
+      }
+
+      function resetGame() {
+        state.started = false
+        state.running = false
+        state.gameOver = false
+        state.score = 0
+        state.speed = 6
+        state.obstacleTimer = 0
+        state.obstacles = []
+        dino.y = ground.y - dino.height
+        dino.velocityY = 0
+        dino.isJumping = false
+        dino.frame = 0
+        updateHud()
+        startOverlay.classList.remove('hidden')
+      }
+
+      function updateHud() {
+        scoreEl.textContent = `Score: ${Math.floor(state.score)}`
+        highScoreEl.textContent = `Best: ${state.highScore}`
+      }
+
+      function spawnCloud() {
+        state.clouds.push({
+          x: canvas.width + 40,
+          y: 30 + Math.random() * 90,
+          w: 28 + Math.random() * 42,
+          h: 16 + Math.random() * 18,
+          speed: 0.5 + Math.random() * 0.8,
+        })
+      }
+
+      function spawnObstacle() {
+        state.obstacles.push(createObstacle())
+      }
+
+      function startGame() {
+        if (state.gameOver) {
+          resetGame()
+        }
+
+        state.started = true
+        state.running = true
+        state.gameOver = false
+        startOverlay.classList.add('hidden')
+      }
+
+      function jump() {
+        if (!state.started && !state.gameOver) {
+          startGame()
+        }
+
+        if (state.gameOver) {
+          resetGame()
+          startGame()
+          return
+        }
+
+        if (dino.isJumping) return
+
+        dino.velocityY = -dino.jumpForce
+        dino.isJumping = true
+      }
+
+      function handleInput(event) {
+        if (event.code === 'Space' || event.code === 'ArrowUp') {
+          event.preventDefault()
+          jump()
+        }
+
+        if (event.code === 'KeyR' && state.gameOver) {
+          resetGame()
+          startGame()
+        }
+      }
+
+      function update(delta) {
+        if (!state.running) return
+
+        state.score += delta * 0.015 * state.speed
+        state.speed = Math.min(18, 6 + state.score * 0.025)
+        state.obstacleTimer -= delta
+
+        if (state.obstacleTimer <= 0) {
+          spawnObstacle()
+          const spacing = Math.max(900, 1400 - state.score * 8)
+          state.obstacleTimer = spacing / 1000
+        }
+
+        if (Math.random() < 0.012) {
+          spawnCloud()
+        }
+
+        dino.velocityY += dino.gravity * delta
+        dino.y += dino.velocityY * delta
+
+        if (dino.y + dino.height >= ground.y) {
+          dino.y = ground.y - dino.height
+          dino.velocityY = 0
+          dino.isJumping = false
+        }
+
+        for (const cloud of state.clouds) {
+          cloud.x -= cloud.speed * (60 * delta)
+        }
+        state.clouds = state.clouds.filter((cloud) => cloud.x + cloud.w > -10)
+
+        for (const obstacle of state.obstacles) {
+          obstacle.x -= state.speed * 60 * delta
+
+          if (!obstacle.passed && obstacle.x + obstacle.width < dino.x) {
+            obstacle.passed = true
+            state.score += obstacle.type === 'bird' ? 15 : 10
+          }
+        }
+
+        state.obstacles = state.obstacles.filter((obstacle) => obstacle.x + obstacle.width > -30)
+
+        const dinoRect = {
+          x: dino.x + 4,
+          y: dino.y + 4,
+          width: dino.width - 8,
+          height: dino.height - 6,
+        }
+
+        for (const obstacle of state.obstacles) {
+          const obstacleRect = {
+            x: obstacle.x + 2,
+            y: obstacle.y + 2,
+            width: obstacle.width - 4,
+            height: obstacle.height - 4,
+          }
+
+          if (
+            dinoRect.x < obstacleRect.x + obstacleRect.width &&
+            dinoRect.x + dinoRect.width > obstacleRect.x &&
+            dinoRect.y < obstacleRect.y + obstacleRect.height &&
+            dinoRect.y + dinoRect.height > obstacleRect.y
+          ) {
+            endGame()
+            break
+          }
+        }
+
+        if (Math.floor(state.score) > state.highScore) {
+          state.highScore = Math.floor(state.score)
+          localStorage.setItem('chromeDinoHighScore', String(state.highScore))
+        }
+
+        updateHud()
+      }
+
+      function endGame() {
+        state.running = false
+        state.gameOver = true
+        startOverlay.classList.remove('hidden')
+        startOverlay.innerHTML = '<div class="start-message">Game over — press space</div>'
+      }
+
+      function drawCloud(cloud) {
+        ctx.beginPath()
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'
+        ctx.arc(cloud.x, cloud.y, cloud.h * 0.48, Math.PI * 0.5, Math.PI * 1.5)
+        ctx.arc(cloud.x + cloud.w * 0.22, cloud.y - cloud.h * 0.38, cloud.h * 0.62, Math.PI, Math.PI * 2)
+        ctx.arc(cloud.x + cloud.w * 0.55, cloud.y - cloud.h * 0.18, cloud.h * 0.68, Math.PI, Math.PI * 2)
+        ctx.arc(cloud.x + cloud.w, cloud.y, cloud.h * 0.46, Math.PI * 1.5, Math.PI * 0.5)
+        ctx.fill()
+      }
+
+      function drawDino() {
+        const x = dino.x
+        const y = dino.y
+        const legSwing = dino.isJumping ? 0 : Math.sin(Date.now() / 90) * 1.5
+
+        ctx.fillStyle = '#f2d77b'
+        ctx.fillRect(x + 5, y + 10, 18, 18)
+        ctx.fillRect(x + 18, y + 6, 12, 14)
+        ctx.fillRect(x + 25, y + 12, 10, 9)
+
+        ctx.fillStyle = '#f7e7a4'
+        ctx.fillRect(x + 8, y + 13, 16, 13)
+
+        ctx.fillStyle = '#f4c94d'
+        ctx.fillRect(x + 28, y + 15, 10, 5)
+        ctx.fillRect(x + 30, y + 17, 9, 3)
+
+        ctx.fillStyle = '#f7e7a4'
+        ctx.fillRect(x + 7, y + 16, 4, 4)
+        ctx.fillRect(x + 23, y + 15, 3, 3)
+
+        ctx.fillStyle = '#1f1f1f'
+        ctx.fillRect(x + 15, y + 16, 2, 2)
+        ctx.fillRect(x + 24, y + 16, 2, 2)
+
+        ctx.fillStyle = '#ef5a39'
+        ctx.fillRect(x + 32, y + 18, 6, 3)
+
+        ctx.fillStyle = '#d35d8d'
+        ctx.fillRect(x + 12, y + 7, 4, 3)
+        ctx.fillRect(x + 18, y + 6, 3, 3)
+
+        ctx.fillStyle = '#f0b738'
+        ctx.fillRect(x + 8, y + 29, 6, 10 + legSwing)
+        ctx.fillRect(x + 20, y + 29, 5, 10 - legSwing)
+
+        ctx.fillStyle = '#d3a53f'
+        ctx.fillRect(x + 4, y + 28, 5, 8)
+        ctx.fillRect(x + 24, y + 28, 5, 8)
+      }
+
+      function drawObstacle(obstacle) {
+        if (obstacle.type === 'bird') {
+          const flap = Math.sin((Date.now() / 110) + obstacle.phase) * 4
+          const bx = obstacle.x
+          const by = obstacle.y
+
+          ctx.fillStyle = '#2f2f2f'
+          ctx.beginPath()
+          ctx.moveTo(bx + 6, by + 11)
+          ctx.quadraticCurveTo(bx + 14, by + flap, bx + 26, by + 11)
+          ctx.quadraticCurveTo(bx + 18, by + 20, bx + 6, by + 11)
+          ctx.fill()
+
+          ctx.fillStyle = '#d7d7d7'
+          ctx.fillRect(bx + 9, by + 10, 4, 2)
+          ctx.fillRect(bx + 16, by + 10, 4, 2)
+
+          ctx.fillStyle = '#ff8e4a'
+          ctx.beginPath()
+          ctx.moveTo(bx + 23, by + 11)
+          ctx.lineTo(bx + 30, by + 13)
+          ctx.lineTo(bx + 23, by + 16)
+          ctx.fill()
+
+          ctx.fillStyle = '#d95a4d'
+          ctx.fillRect(bx + 12, by + 8, 4, 3)
+
+          return
+        }
+
+        ctx.fillStyle = '#4d8d4d'
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height)
+
+        ctx.fillStyle = '#3f753f'
+        ctx.fillRect(obstacle.x + obstacle.width * 0.48, obstacle.y, 4, obstacle.height)
+        ctx.fillRect(obstacle.x + obstacle.width * 0.18, obstacle.y + obstacle.height * 0.26, 8, 4)
+        ctx.fillRect(obstacle.x + obstacle.width * 0.58, obstacle.y + obstacle.height * 0.45, 7, 4)
+      }
+
+      function drawGround() {
+        ctx.fillStyle = '#4b4b4b'
+        ctx.fillRect(0, ground.y, canvas.width, ground.height)
+
+        ctx.fillStyle = '#7a7a7a'
+        for (let x = 0; x < canvas.width + 20; x += 18) {
+          ctx.fillRect(x, ground.y + 18, 10, 2)
+        }
+
+        ctx.fillStyle = '#3a3a3a'
+        ctx.fillRect(0, ground.y + 38, canvas.width, 6)
+
+        ctx.fillStyle = 'rgba(0,0,0,0.04)'
+        for (let x = 0; x < canvas.width + 20; x += 36) {
+          ctx.fillRect(x, ground.y + 3, 16, 2)
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        for (const cloud of state.clouds) drawCloud(cloud)
+
+        drawGround()
+
+        for (const obstacle of state.obstacles) drawObstacle(obstacle)
+        drawDino()
+
+        if (!state.started && !state.gameOver) {
+          ctx.fillStyle = 'rgba(31,31,31,0.18)'
+          ctx.fillRect(dino.x - 4, dino.y + 42, 40, 6)
+        }
+      }
+
+      function gameLoop(timestamp) {
+        const delta = Math.min((timestamp - state.lastTime) / 1000 || 0.016, 0.032)
+        state.lastTime = timestamp
+
+        if (state.running) {
+          update(delta)
+        }
+
+        draw()
+        requestAnimationFrame(gameLoop)
+      }
+
+      window.addEventListener('keydown', handleInput)
+      window.addEventListener('pointerdown', () => jump())
+      restartBtn.addEventListener('click', () => {
+        resetGame()
+        startGame()
+      })
+
+      for (let i = 0; i < 4; i++) spawnCloud()
+      resetGame()
+      requestAnimationFrame(gameLoop)
+    </script>
+  </body>
+</html>
