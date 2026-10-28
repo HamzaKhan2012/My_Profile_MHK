@@ -1,17 +1,46 @@
-# React + Vite
+# 💻 My Profile (MHK)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A personal, modern frontend portfolio landing page built using **React** and **Vite** to showcase my development projects, tech stack, and certifications.
 
-Currently, two official plugins are available:
+The live website is automatically deployed and accessible here: **[my-profile-mhk.vercel.app](https://vercel.app)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Features
+*   **Lightning Fast Build:** Developed using Vite for optimal hot module reloading and speed.
+*   **Component Architecture:** Built with React for reusable modular interface elements.
+*   **Automated Deployment:** Integrated with Vercel for continuous integration and live hosting.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Local Development Setup
 
-## Expanding the Oxlint configuration
+To download this project and run a local development server on your machine, follow these steps:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
-# chrome-chicken
+### 1. Clone the Repository
+```bash
+git clone https://github.com
+cd My_Profile_MHK
+```
+
+### 2. Install Dependencies
+Make sure you have Node.js installed, then run:
+```bash
+npm install
+```
+
+### 3. Run the Development Server
+```bash
+npm run dev
+```
+*Click the local URL (usually `http://localhost:5173`) provided in your terminal to view the project live!*
+
+---
+
+## 🛠️ Built With
+*   **React:** Frontend application framework.
+*   **Vite:** Build tool and local development server.
+*   **CSS3:** Layout design, theme styling, and animations.
+
+---
+
+## 👨‍💻 Author
+*   **Hamza** — Year 10 GCSE Computer Science Student & Frontend Developer.
